@@ -48,7 +48,7 @@ async def extract_text_api(image_bytes: bytes) -> tuple[str, float]:
                     ]
                 }
             ],
-            max_tokens=2000,
+            max_completion_tokens=2000,
             temperature=0.1 # Suhu rendah = tidak halusinasi, murni deterministik
         )
         
