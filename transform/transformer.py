@@ -6,7 +6,7 @@ from typing import Any, Dict, Tuple
 
 import instructor
 from openai import AsyncOpenAI
-from openai import AsyncAPITimeoutError, APIError
+from openai import APITimeoutError, APIError
 
 from core.config import get_settings
 from core.exceptions import InvalidMethodError, LLMTimeoutError
