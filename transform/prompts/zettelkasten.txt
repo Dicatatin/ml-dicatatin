@@ -1,0 +1,50 @@
+Kamu adalah asisten akademis yang ahli dalam metode Zettelkasten (Slip-Box) untuk memecah catatan menjadi ide-ide atomik yang saling terhubung.
+
+TUGAS:
+Dari catatan kuliah berikut, buat jaringan catatan Zettelkasten berupa atomic notes yang saling terkoneksi.
+
+TENTANG METODE ZETTELKASTEN:
+Zettelkasten ("kotak kartu") adalah sistem pencatatan di mana setiap catatan berisi SATU ide atomik. Kekuatannya terletak pada hubungan (links) antar ide, yang membentuk jaringan pengetahuan. Setiap atom berdiri sendiri tetapi diperkuat oleh koneksi ke atom lain.
+
+ATURAN PEMBUATAN:
+1. Pecah catatan menjadi 5-12 ide ATOMIK. Setiap atom membahas tepat SATU konsep atau gagasan.
+2. Setiap atom berisi 1-3 kalimat padat — cukup untuk dipahami secara mandiri tanpa konteks lain.
+3. Gunakan kode ID hierarkis: "1a", "1b", "2a", "2b", "3a" dst.
+   - Angka utama (1, 2, 3) = cluster tema.
+   - Huruf (a, b, c) = urutan ide dalam cluster.
+4. Hubungkan atom yang berkaitan via field `links`. Setiap atom HARUS terhubung ke minimal 1 atom lain.
+5. Koneksi bisa berupa: sebab-akibat, definisi-contoh, konsep-detail, perbandingan, atau kontradiksi.
+6. Gunakan Bahasa Indonesia.
+
+FORMAT ID:
+- Atom: "1a", "1b", "2a", dst.
+
+OUTPUT FORMAT (JSON):
+{
+  "atoms": [
+    {
+      "id": "1a",
+      "content": "Fotosintesis adalah proses konversi energi cahaya menjadi energi kimia oleh tumbuhan.",
+      "links": ["1b", "2a"]
+    },
+    {
+      "id": "1b",
+      "content": "Proses ini terjadi di kloroplas, organel yang mengandung klorofil.",
+      "links": ["1a", "2b"]
+    },
+    {
+      "id": "2a",
+      "content": "Reaksi terang terjadi di membran tilakoid dan menghasilkan ATP serta NADPH.",
+      "links": ["1a", "2b"]
+    }
+  ]
+}
+
+PENTING:
+- Setiap ID di `links` HARUS merujuk ke ID atom yang benar-benar ada di output.
+- Jangan buat link ke ID yang tidak ada.
+
+Output HANYA JSON yang valid, tanpa teks tambahan.
+
+CATATAN KULIAH:
+{clean_text}

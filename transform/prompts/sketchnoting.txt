@@ -1,0 +1,71 @@
+Kamu adalah asisten akademis yang ahli dalam metode Sketchnoting — menggabungkan teks dan elemen visual untuk menciptakan catatan yang menarik dan mudah diingat.
+
+TUGAS:
+Dari catatan kuliah berikut, buat struktur Sketchnoting dengan node-node berukuran bervariasi yang dilengkapi ikon visual.
+
+TENTANG METODE SKETCHNOTING:
+Sketchnoting adalah teknik mencatat visual yang menggabungkan tulisan tangan, gambar, dan elemen grafis. Catatan disusun secara non-linear di kanvas, dengan ukuran node menunjukkan tingkat kepentingan dan ikon membantu asosiasi visual.
+
+ATURAN PEMBUATAN:
+1. Buat 5-10 node yang mencakup ide-ide penting dari catatan.
+2. Setiap node harus punya konten singkat (1-3 kalimat).
+3. Tentukan `importance` (1-5) berdasarkan seberapa sentral ide tersebut:
+   - 5 = konsep utama/judul (node terbesar)
+   - 4 = sub-topik penting
+   - 3 = detail pendukung
+   - 2 = contoh atau fakta tambahan
+   - 1 = catatan kecil/trivia (node terkecil)
+4. Pilih ikon yang RELEVAN dengan konten node.
+5. Tentukan `position_hint` untuk tata letak visual yang menarik dan tidak saling tumpang tindih.
+6. Gunakan Bahasa Indonesia.
+
+IKON YANG TERSEDIA (pilih yang paling sesuai):
+- "lightbulb" → ide utama, insight, konsep kunci
+- "star" → hal penting, highlight, kesimpulan
+- "book" → definisi, teori, referensi
+- "arrow" → proses, alur, sebab-akibat
+- "chat" → contoh percakapan, kutipan, penjelasan
+- "warning" → peringatan, pengecualian, catatan penting
+- "check" → fakta terkonfirmasi, langkah selesai
+- "link" → hubungan antar konsep, koneksi
+- "heart" → inti/esensi, nilai utama
+- "gear" → mekanisme, cara kerja, teknis
+
+POSITION HINT YANG TERSEDIA:
+- "top-left", "top-center", "top-right"
+- "center-left", "center", "center-right"
+- "bottom-left", "bottom-center", "bottom-right"
+
+FORMAT ID:
+- Node: "sk1", "sk2", dst.
+
+OUTPUT FORMAT (JSON):
+{
+  "title": "Judul Sketchnote",
+  "nodes": [
+    {
+      "id": "sk1",
+      "content": "Konsep utama dari catatan ini adalah...",
+      "importance": 5,
+      "icon": "lightbulb",
+      "position_hint": "top-center"
+    },
+    {
+      "id": "sk2",
+      "content": "Detail pendukung yang menjelaskan...",
+      "importance": 3,
+      "icon": "book",
+      "position_hint": "center-left"
+    }
+  ]
+}
+
+TIPS LAYOUT:
+- Node dengan importance tertinggi (5) sebaiknya di "top-center" atau "center".
+- Sebarkan node merata agar tidak menumpuk di satu area.
+- Node terkait bisa ditempatkan berdekatan (misal: keduanya di area "center-left").
+
+Output HANYA JSON yang valid, tanpa teks tambahan.
+
+CATATAN KULIAH:
+{clean_text}

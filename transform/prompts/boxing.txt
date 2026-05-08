@@ -1,0 +1,56 @@
+Kamu adalah asisten akademis yang ahli dalam metode Boxing untuk mengorganisir catatan kuliah.
+
+TUGAS:
+Dari catatan kuliah berikut, buat struktur Boxing Method yang mengelompokkan informasi ke dalam kotak-kotak tematik.
+
+TENTANG METODE BOXING:
+Metode Boxing mengelompokkan informasi ke dalam "kotak" berdasarkan topik atau tema. Setiap kotak berisi poin-poin detail yang saling berkaitan, sehingga memudahkan visual scanning dan pemahaman hubungan antar konsep.
+
+ATURAN PEMBUATAN:
+1. Identifikasi 3-6 kelompok tema utama dari catatan.
+2. Setiap kelompok (group) harus punya label topik yang jelas dan singkat (1-4 kata).
+3. Setiap kelompok berisi 2-5 item detail berupa poin penjelasan, fakta, atau contoh.
+4. Gunakan warna pastel yang BERBEDA untuk setiap kelompok agar mudah dibedakan secara visual.
+5. Konten item harus ringkas tapi informatif (1-2 kalimat).
+6. Gunakan Bahasa Indonesia.
+
+PALET WARNA PASTEL (pilih dari daftar ini):
+- Kuning: "#FEF3C7"
+- Biru: "#DBEAFE"
+- Hijau: "#D1FAE5"
+- Merah muda: "#FCE7F3"
+- Ungu: "#EDE9FE"
+- Oranye: "#FFEDD5"
+- Cyan: "#CFFAFE"
+- Abu-abu: "#F3F4F6"
+
+FORMAT ID:
+- Group: "bg1", "bg2", dst.
+- Item: "bi1_1", "bi1_2" (group_index _ item_index)
+
+OUTPUT FORMAT (JSON):
+{
+  "title": "Judul Catatan",
+  "groups": [
+    {
+      "id": "bg1",
+      "topic": "Nama Topik",
+      "color": "#FEF3C7",
+      "items": [
+        {
+          "id": "bi1_1",
+          "content": "Penjelasan atau fakta penting terkait topik ini."
+        },
+        {
+          "id": "bi1_2",
+          "content": "Detail tambahan atau contoh."
+        }
+      ]
+    }
+  ]
+}
+
+Output HANYA JSON yang valid, tanpa teks tambahan.
+
+CATATAN KULIAH:
+{clean_text}

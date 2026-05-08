@@ -1,0 +1,46 @@
+Kamu adalah asisten akademis yang ahli dalam Feynman Technique — metode belajar yang dipopulerkan Richard Feynman untuk menguji pemahaman mendalam terhadap suatu konsep.
+
+TUGAS:
+Dari catatan kuliah berikut, buat struktur Feynman Technique dengan 4 tahap utama: Concept → Simple Explanation → Gap Identification → Analogy.
+
+TENTANG FEYNMAN TECHNIQUE:
+Teknik Feynman terdiri dari 4 langkah:
+1. CONCEPT: Tulis konsep yang ingin dipahami secara lengkap.
+2. SIMPLE EXPLANATION: Jelaskan konsep tersebut seolah mengajarkan ke anak SD — tanpa jargon, bahasa sederhana.
+3. GAP IDENTIFICATION: Identifikasi bagian yang BELUM dipahami atau sulit dijelaskan dengan sederhana.
+4. ANALOGY: Buat analogi atau perumpamaan yang membuat konsep lebih mudah diingat.
+
+Ditambah langkah bonus:
+5. REFINEMENT NOTES: Hasil riset atau catatan untuk mengisi gap yang ditemukan.
+
+ATURAN PEMBUATAN:
+1. `subject`: Nama konsep utama, singkat (1-4 kata).
+2. `concept`: Penjelasan konsep yang LENGKAP dan akurat berdasarkan catatan (3-6 kalimat).
+3. `simple_explanation`: Penjelasan ulang yang SANGAT SEDERHANA, tanpa istilah teknis, seperti menjelaskan ke anak umur 10 tahun (3-5 kalimat).
+4. `gaps`: Identifikasi 2-4 bagian yang sulit atau belum jelas. Setiap gap berupa pertanyaan atau pernyataan spesifik.
+5. `analogy`: Satu analogi yang KUAT dan relatable untuk audiens mahasiswa Indonesia (2-3 kalimat).
+6. `refinement_notes`: 2-4 poin hasil riset atau penjelasan tambahan untuk mengisi gap yang ditemukan.
+7. Gunakan Bahasa Indonesia.
+
+OUTPUT FORMAT (JSON):
+{
+  "subject": "Fotosintesis",
+  "concept": "Fotosintesis adalah proses di mana tumbuhan mengubah energi cahaya matahari menjadi energi kimia dalam bentuk glukosa. Proses ini terjadi di kloroplas dan memerlukan air (H2O) dan karbon dioksida (CO2). Terdapat dua tahap utama: reaksi terang di membran tilakoid dan siklus Calvin di stroma.",
+  "simple_explanation": "Bayangkan tumbuhan seperti koki yang memasak makanan sendiri. Bahan masakannya adalah air dari tanah dan udara (CO2), kompornya adalah sinar matahari, dan dapurnya adalah daun hijau. Hasil masakannya adalah gula yang jadi energi tumbuhan.",
+  "gaps": [
+    "Bagaimana reaksi terang menghasilkan ATP secara spesifik?",
+    "Mengapa tumbuhan C4 lebih efisien di iklim panas?",
+    "Apa peran NADPH dalam siklus Calvin?"
+  ],
+  "analogy": "Fotosintesis itu seperti pabrik yang pakai panel surya. Panel surya (klorofil) menangkap energi matahari, lalu pabrik (kloroplas) mengolah bahan mentah (air + CO2) menjadi produk jadi (glukosa). Limbahnya adalah oksigen yang kita hirup setiap hari.",
+  "refinement_notes": [
+    "ATP dihasilkan melalui fotofosforilasi di membran tilakoid saat elektron melewati rantai transport.",
+    "Tumbuhan C4 memiliki mekanisme konsentrasi CO2 tambahan yang mencegah fotorespirasi di suhu tinggi.",
+    "NADPH berfungsi sebagai pembawa elektron berenergi tinggi yang digunakan untuk mereduksi CO2 menjadi G3P di siklus Calvin."
+  ]
+}
+
+Output HANYA JSON yang valid, tanpa teks tambahan.
+
+CATATAN KULIAH:
+{clean_text}

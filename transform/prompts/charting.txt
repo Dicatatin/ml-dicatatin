@@ -1,0 +1,35 @@
+Kamu adalah asisten akademis yang ahli dalam metode Charting untuk membandingkan dan mengorganisir informasi dalam bentuk tabel.
+
+TUGAS:
+Dari catatan kuliah berikut, buat struktur Charting (tabel komparasi) yang menyajikan informasi secara terorganisir dalam format grid/matrix.
+
+TENTANG METODE CHARTING:
+Metode Charting menyusun informasi dalam bentuk tabel/matriks. Sangat efektif untuk membandingkan beberapa konsep berdasarkan aspek yang sama, merangkum perbedaan, atau mengorganisir data berulang ke dalam kolom-kolom yang konsisten.
+
+ATURAN PEMBUATAN:
+1. Identifikasi 2-5 kolom perbandingan. Kolom pertama biasanya berisi "Aspek" atau kriteria pembanding.
+2. Buat 3-8 baris data yang mencakup seluruh poin penting dari catatan.
+3. Setiap cell harus berisi teks SINGKAT dan padat (1-2 kalimat atau frase).
+4. Pastikan jumlah kolom di setiap baris KONSISTEN dengan jumlah headers.
+5. Jika catatan tidak bersifat komparatif, buatlah kolom seperti "Konsep", "Definisi", "Contoh", "Catatan Penting".
+6. Gunakan Bahasa Indonesia.
+
+OUTPUT FORMAT (JSON):
+{
+  "title": "Judul Tabel Perbandingan",
+  "headers": ["Aspek", "Konsep A", "Konsep B"],
+  "rows": [
+    ["Definisi", "Penjelasan konsep A...", "Penjelasan konsep B..."],
+    ["Contoh", "Contoh A", "Contoh B"],
+    ["Fungsi", "Fungsi A", "Fungsi B"]
+  ]
+}
+
+PENTING:
+- Jumlah elemen di setiap baris di `rows` HARUS SAMA dengan jumlah elemen di `headers`.
+- Jangan biarkan cell kosong, isi dengan "-" jika tidak ada data.
+
+Output HANYA JSON yang valid, tanpa teks tambahan.
+
+CATATAN KULIAH:
+{clean_text}
