@@ -32,9 +32,16 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     openai_api_key: str
 
+    # -------------------------------------------------------------------------
+    # NLP API (Biznet AI / Lainnya) — API Key untuk Transformasi & Flashcard
+    # -------------------------------------------------------------------------
+    llm_api_key: str | None = None
+    llm_model_name: str | None = None
+    llm_base_url: str | None = None
+
     # Model per stage pipeline
     openai_model_ocr: str = "gpt-4o"          # Vision OCR (jalur utama)
-    openai_model_transform: str = "gpt-4o"    # Transformasi metode belajar
+    openai_model_transform: str = "gpt-4o"    # Transformasi metode belajar (fallback)
     openai_model_sanitizer: str = "gpt-4o-mini"  # Sanitasi teks (hemat biaya)
     openai_model_flashcard: str = "gpt-4o-mini"  # Generate flashcard (hemat biaya)
 
