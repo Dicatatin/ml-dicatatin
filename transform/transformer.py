@@ -435,8 +435,7 @@ def _convert_feynman(data: schemas.FeynmanSchema) -> Tuple[list, list]:
     steps = [
         {"id": "fy_concept", "label": "The Concept", "content": data.concept, "step": 1},
         {"id": "fy_simple", "label": "Simple Explanation", "content": data.simple_explanation, "step": 2},
-        {"id": "fy_gap", "label": "Gap Identification", "content": "
-".join(f"- {g}" for g in data.gaps), "step": 3},
+        {"id": "fy_gap", "label": "Gap Identification", "content": "\n".join(f"- {g}" for g in data.gaps), "step": 3},
         {"id": "fy_analogy", "label": "Analogy", "content": data.analogy, "step": 4},
     ]
     
