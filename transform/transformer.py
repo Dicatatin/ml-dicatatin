@@ -17,7 +17,10 @@ settings = get_settings()
 
 # Inisialisasi client OpenAI dengan Instructor
 # Gunakan mode asinkron karena dipanggil dari endpoint FastAPI
-client = instructor.from_openai(AsyncOpenAI(api_key=settings.openai_api_key))
+# Memprioritaskan LLM_API_KEY (Biznet/Lainnya) jika ada, jika tidak fallback ke OPENAI_API_KEY
+_api_key = settings.llm_api_key if settings.llm_api_key else settings.openai_api_key
+_base_url = settings.llm_base_url if settings.llm_api_key else None
+client = instructor.from_openai(AsyncOpenAI(api_key=_api_key, base_url=_base_url))
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
@@ -46,7 +49,13 @@ def load_prompt(method: str) -> str:
         return "Tolong format teks berikut: {clean_text}"
         
     with open(prompt_path, "r", encoding="utf-8") as f:
-        return f.read()
+        base_prompt = f.read()
+        
+    latex_instruction = """
+PENTING - FORMAT RUMUS & ESTETIKA:
+1. Jika terdapat rumus matematika, fisika, atau kimia, WAJIB gunakan format LaTeX dengan mengapit rumus menggunakan $$ (misal: $$E=mc^2$$). Jangan gunakan karakter Unicode khusus, selalu gunakan LaTeX murni.
+"""
+    return base_prompt + "\n" + latex_instruction
 
 async def transform_notes(clean_text: str, method: str) -> Dict[str, Any]:
     """
@@ -64,9 +73,10 @@ async def transform_notes(clean_text: str, method: str) -> Dict[str, Any]:
     
     try:
         # Gunakan asyncio.wait_for untuk membatasi waktu eksekusi LLM
+        model_name = settings.llm_model_name if settings.llm_model_name else settings.openai_model_transform
         structured_output = await asyncio.wait_for(
             client.chat.completions.create(
-                model=settings.openai_model_transform,
+                model=model_name,
                 response_model=schema_class,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.2, # Sedikit deterministik tapi masih punya ruang untuk ide
@@ -95,6 +105,20 @@ async def transform_notes(clean_text: str, method: str) -> Dict[str, Any]:
     }
 
 
+def calculate_handles(source_x, source_y, target_x, target_y):
+    dx = target_x - source_x
+    dy = target_y - source_y
+    if abs(dx) > abs(dy):
+        if dx > 0:
+            return "right", "left"
+        else:
+            return "left", "right"
+    else:
+        if dy > 0:
+            return "bottom", "top"
+        else:
+            return "top", "bottom"
+
 def convert_to_reactflow(data: Any, method: str) -> Tuple[list, list]:
     """
     Mengubah output terstruktur (Pydantic schema) menjadi format 
@@ -118,6 +142,82 @@ def convert_to_reactflow(data: Any, method: str) -> Tuple[list, list]:
     elif method == "feynman":
         nodes, edges = _convert_feynman(data)
         
+    # Add handles to edges based on position
+    node_positions = {n["id"]: n["position"] for n in nodes if "position" in n and n.get("type") != "boxingItem"}
+    for e in edges:
+        source_id = e.get("source")
+        target_id = e.get("target")
+        if source_id in node_positions and target_id in node_positions:
+            s_pos = node_positions[source_id]
+            t_pos = node_positions[target_id]
+            sh, th = calculate_handles(s_pos["x"], s_pos["y"], t_pos["x"], t_pos["y"])
+            e["sourceHandle"] = sh
+            e["targetHandle"] = th
+
+    # Determine bounds for background and header
+    if nodes:
+        min_x = min(n["position"]["x"] for n in nodes if "position" in n)
+        max_x = max(n["position"]["x"] + int(n.get("style", {}).get("width", 200)) for n in nodes if "position" in n)
+        min_y = min(n["position"]["y"] for n in nodes if "position" in n)
+        max_y = max(n["position"]["y"] + int(n.get("style", {}).get("height", 100)) for n in nodes if "position" in n)
+        
+        width = max_x - min_x + 400
+        height = max_y - min_y + 400
+        center_x = min_x + (max_x - min_x) / 2
+        
+        bg_colors = {
+            "mind_map": "#F0F9FF",
+            "cornell": "#FAFAF9",
+            "boxing": "#F3F4F6",
+            "charting": "#F0FDFA",
+            "zettelkasten": "#F0FDF4",
+            "sketchnoting": "#FEFCE8",
+            "feynman": "#FFF1F2"
+        }
+        bg_color = bg_colors.get(method, "#F8FAFC")
+        
+        # Add Background Node
+        nodes.insert(0, {
+            "id": "global_background",
+            "type": "methodBackground",
+            "position": {"x": min_x - 200, "y": min_y - 200},
+            "data": {"label": ""},
+            "style": {
+                "width": width,
+                "height": height,
+                "backgroundColor": bg_color,
+                "zIndex": -10,
+                "borderRadius": "24px",
+                "border": "2px dashed #CBD5E1"
+            },
+            "draggable": False,
+            "selectable": False
+        })
+        
+        # Determine Title
+        title_text = getattr(data, "title", None)
+        if not title_text:
+            title_text = getattr(data, "subject", "Catatan AI")
+            
+        # Add Header Node
+        nodes.append({
+            "id": "global_header",
+            "type": "methodHeader",
+            "position": {"x": center_x - 200, "y": min_y - 150},
+            "data": {"label": title_text},
+            "style": {
+                "width": 400,
+                "backgroundColor": "#1E293B",
+                "color": "#F8FAFC",
+                "fontSize": "24px",
+                "fontWeight": "bold",
+                "textAlign": "center",
+                "padding": "15px",
+                "borderRadius": "12px",
+                "boxShadow": "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+            }
+        })
+        
     return nodes, edges
 
 # -----------------------------------------------------------------------------
@@ -127,315 +227,248 @@ def convert_to_reactflow(data: Any, method: str) -> Tuple[list, list]:
 def _convert_mindmap(data: schemas.MindMapSchema) -> Tuple[list, list]:
     nodes = []
     edges = []
-    
-    # Tambahkan title node (Opsional, tergantung butuh dirender atau tidak)
-    # nodes.append({"id": "mm_title", "type": "title", "position": {"x": 400, "y": 50}, "data": {"label": data.title}})
-
     canvas_center = (400, 300)
-    
-    # Hitung posisi secara radial
-    positions = {}
-    positions[data.root.id] = canvas_center
-    
+    positions = {data.root.id: canvas_center}
     branches = data.root.children
     n_branches = len(branches)
     
     for i, branch in enumerate(branches):
-        # Distribusi melingkar
         angle = (2 * math.pi / max(1, n_branches)) * i - (math.pi / 2)
-        radius = 200
+        radius = 250
         x = canvas_center[0] + radius * math.cos(angle)
         y = canvas_center[1] + radius * math.sin(angle)
         positions[branch.id] = (round(x), round(y))
         
-        # Edge Root -> Branch
         edges.append({
             "id": f"e-{data.root.id}-{branch.id}",
-            "source": data.root.id,
-            "target": branch.id,
-            "type": "straight",
-            "style": { "stroke": "#93C5FD", "strokeWidth": 2 }
+            "source": data.root.id, "target": branch.id,
+            "type": "smoothstep",
+            "style": { "stroke": "#3B82F6", "strokeWidth": 3 }
         })
         
         n_leaves = len(branch.children)
         for j, leaf in enumerate(branch.children):
-            # Posisi daun menyebar dari cabangnya
-            # Jika 1 daun, sejajar lurus. Jika banyak, menyebar kipas.
             if n_leaves > 1:
-                leaf_angle = angle + (math.pi / 4) * (j - (n_leaves - 1) / 2)
+                leaf_angle = angle + (math.pi / 3) * (j - (n_leaves - 1) / 2) / max(1, (n_leaves - 1))
             else:
                  leaf_angle = angle
-                 
-            leaf_radius = 150
+            leaf_radius = 200 + (n_leaves * 10)
             leaf_x = x + leaf_radius * math.cos(leaf_angle)
             leaf_y = y + leaf_radius * math.sin(leaf_angle)
             positions[leaf.id] = (round(leaf_x), round(leaf_y))
             
-            # Edge Branch -> Leaf
             edges.append({
                 "id": f"e-{branch.id}-{leaf.id}",
-                "source": branch.id,
-                "target": leaf.id,
-                "type": "straight",
-                "style": { "stroke": "#D1D5DB", "strokeWidth": 1 }
+                "source": branch.id, "target": leaf.id,
+                "type": "smoothstep",
+                "style": { "stroke": "#93C5FD", "strokeWidth": 2 }
             })
             
             nodes.append({
-                "id": leaf.id,
-                "type": "mindMapLeaf",
+                "id": leaf.id, "type": "mindMapLeaf",
                 "position": {"x": positions[leaf.id][0], "y": positions[leaf.id][1]},
-                "data": {"label": leaf.label, "depth": 2}
+                "data": {"label": leaf.label, "depth": 2},
+                "style": {"backgroundColor": "#EFF6FF", "color": "#1E40AF", "border": "1px solid #BFDBFE", "padding": "10px", "borderRadius": "8px", "width": 150}
             })
             
         nodes.append({
-            "id": branch.id,
-            "type": "mindMapBranch",
+            "id": branch.id, "type": "mindMapBranch",
             "position": {"x": positions[branch.id][0], "y": positions[branch.id][1]},
-            "data": {"label": branch.label, "depth": 1}
+            "data": {"label": branch.label, "depth": 1},
+            "style": {"backgroundColor": "#BFDBFE", "color": "#1E3A8A", "border": "2px solid #60A5FA", "padding": "12px", "borderRadius": "10px", "width": 180, "fontWeight": "bold"}
         })
 
-    # Tambahkan Root terakhir supaya dirender paling atas (atau sesuai order ReactFlow)
     nodes.append({
-        "id": data.root.id,
-        "type": "mindMapRoot",
+        "id": data.root.id, "type": "mindMapRoot",
         "position": {"x": canvas_center[0], "y": canvas_center[1]},
-        "data": {"label": data.root.label}
+        "data": {"label": data.root.label},
+        "style": {"backgroundColor": "#3B82F6", "color": "#FFFFFF", "border": "3px solid #1D4ED8", "padding": "15px", "borderRadius": "12px", "width": 200, "fontWeight": "bold", "textAlign": "center"}
     })
-    
     return nodes, edges
 
 def _convert_cornell(data: schemas.CornellSchema) -> Tuple[list, list]:
-    nodes = []
-    edges = [] # Cornell tidak butuh edge
-    
+    nodes, edges = [], []
     start_y = 80
-    row_height = 100 # Jarak antar baris
+    row_height = 150
     
-    # Cues
     for i, cue in enumerate(data.cues):
-         # Menggunakan row_index dari AI atau urutan indeks
-         y_pos = start_y + (cue.row_index * row_height)
+         y_pos = start_y + (i * row_height)
+         cue.row_index = i # override to prevent overlapping
          nodes.append({
-             "id": cue.id,
-             "type": "cornellCue",
+             "id": cue.id, "type": "cornellCue",
              "position": {"x": 20, "y": y_pos},
-             "data": {"label": cue.keyword, "rowIndex": cue.row_index}
+             "data": {"label": cue.keyword, "rowIndex": i},
+             "style": {"backgroundColor": "#FDBA74", "color": "#7C2D12", "padding": "15px", "borderRadius": "8px", "width": 200, "fontWeight": "bold", "border": "2px solid #EA580C"}
          })
          
-    # Notes
     for note in data.notes:
-        # Cari cue yang pasangannya untuk menentukan y_pos
         cue_match = next((c for c in data.cues if c.id == note.cue_id), None)
         y_pos = start_y + (cue_match.row_index * row_height) if cue_match else start_y
         nodes.append({
-             "id": note.id,
-             "type": "cornellNote",
-             "position": {"x": 230, "y": y_pos},
-             "data": {"label": note.content, "cueId": note.cue_id}
+             "id": note.id, "type": "cornellNote",
+             "position": {"x": 260, "y": y_pos},
+             "data": {"label": note.content, "cueId": note.cue_id},
+             "style": {"backgroundColor": "#FFEDD5", "color": "#9A3412", "padding": "15px", "borderRadius": "8px", "width": 400, "border": "1px solid #FDBA74"}
          })
         
-    # Summary (Paling Bawah)
-    max_row = max((c.row_index for c in data.cues), default=0)
-    summary_y = start_y + ((max_row + 2) * row_height)
+    summary_y = start_y + (len(data.cues) * row_height) + 50
     nodes.append({
-        "id": "cs_summary",
-        "type": "cornellSummary",
+        "id": "cs_summary", "type": "cornellSummary",
         "position": {"x": 20, "y": summary_y},
-        "data": {"label": data.summary}
+        "data": {"label": data.summary},
+        "style": {"backgroundColor": "#F97316", "color": "#FFFFFF", "padding": "20px", "borderRadius": "12px", "width": 640, "fontWeight": "bold", "textAlign": "center"}
     })
-    
     return nodes, edges
 
 def _convert_boxing(data: schemas.BoxingSchema) -> Tuple[list, list]:
-    nodes = []
-    edges = [] # Boxing tidak butuh edge, melainkan hirarki parent-child
-    
-    # Layout kotak-kotak secara grid
+    nodes, edges = [], []
     cols = 2
-    box_width = 350
-    box_height = 250
-    margin_x = 50
-    margin_y = 50
+    box_width = 380
+    margin_x, margin_y = 60, 60
     
     for i, group in enumerate(data.groups):
-        col = i % cols
-        row = i // cols
-        
+        col, row = i % cols, i // cols
         group_x = 20 + col * (box_width + margin_x)
-        group_y = 80 + row * (box_height + margin_y)
+        group_y = 80 + row * (400 + margin_y)
+        box_height = max(250, 80 + len(group.items) * 60)
         
-        # Parent Node (Box)
         nodes.append({
-            "id": group.id,
-            "type": "boxingGroup",
+            "id": group.id, "type": "boxingGroup",
             "position": {"x": group_x, "y": group_y},
             "data": {"label": group.topic, "color": group.color},
-            "style": {"width": box_width, "height": box_height}
+            "style": {"width": box_width, "height": box_height, "backgroundColor": "#F8FAFC", "border": f"4px solid {group.color or '#94A3B8'}", "borderRadius": "16px", "paddingTop": "20px"}
         })
         
-        # Child Nodes (Items di dalam box)
-        item_start_y = 50 # Relatif terhadap Parent
+        item_start_y = 60
         for j, item in enumerate(group.items):
              nodes.append({
-                 "id": item.id,
-                 "type": "boxingItem",
-                 "position": {"x": 20, "y": item_start_y + (j * 40)},
+                 "id": item.id, "type": "boxingItem",
+                 "position": {"x": 20, "y": item_start_y + (j * 55)},
                  "data": {"label": item.content},
-                 "parentId": group.id,
-                 "extent": "parent" # Membatasi drag item di dalam parent
+                 "parentId": group.id, "extent": "parent",
+                 "style": {"backgroundColor": "#FFFFFF", "color": "#1E293B", "padding": "10px", "borderRadius": "8px", "width": box_width - 40, "border": "1px solid #E2E8F0"}
              })
-             
     return nodes, edges
 
 def _convert_charting(data: schemas.ChartingSchema) -> Tuple[list, list]:
-    nodes = []
-    edges = []
+    nodes, edges = [], []
+    col_width, row_height = 250, 120
+    start_x, start_y = 20, 80
     
-    col_width = 200
-    row_height = 80
-    start_x = 0
-    start_y = 0
-    
-    # Headers
     for i, header in enumerate(data.headers):
         nodes.append({
-            "id": f"ch_header_{i}",
-            "type": "chartingHeader",
+            "id": f"ch_header_{i}", "type": "chartingHeader",
             "position": {"x": start_x + (i * col_width), "y": start_y},
-            "data": {"label": header}
+            "data": {"label": header},
+            "style": {"backgroundColor": "#0F766E", "color": "#FFFFFF", "padding": "15px", "borderRadius": "8px", "width": col_width - 20, "fontWeight": "bold", "textAlign": "center"}
         })
         
-    # Data Rows
     for r_idx, row_data in enumerate(data.rows):
         y_pos = start_y + ((r_idx + 1) * row_height)
         for c_idx, cell_value in enumerate(row_data):
              nodes.append({
-                 "id": f"ch_cell_{r_idx}_{c_idx}",
-                 "type": "chartingCell",
+                 "id": f"ch_cell_{r_idx}_{c_idx}", "type": "chartingCell",
                  "position": {"x": start_x + (c_idx * col_width), "y": y_pos},
-                 "data": {"label": cell_value}
+                 "data": {"label": cell_value},
+                 "style": {"backgroundColor": "#CCFBF1", "color": "#115E59", "padding": "15px", "borderRadius": "8px", "width": col_width - 20, "border": "1px solid #5EEAD4"}
              })
-             
     return nodes, edges
 
 def _convert_zettelkasten(data: schemas.ZettelkastenSchema) -> Tuple[list, list]:
-    nodes = []
-    edges = []
-    
-    # Simple grid layout (krn perhitungan force-directed layout susah kalau murni algoritma sini, 
-    # bisa dilempar ke FE atau ditata simpel)
-    cols = 3
-    margin = 300
+    nodes, edges = [], []
+    cols = max(3, math.ceil(math.sqrt(len(data.atoms))))
+    margin = 350
     
     for i, atom in enumerate(data.atoms):
-        col = i % cols
-        row = i // cols
+        col, row = i % cols, i // cols
         nodes.append({
-            "id": f"z_{atom.id}",
-            "type": "zettelAtom",
+            "id": f"z_{atom.id}", "type": "zettelAtom",
             "position": {"x": 50 + col * margin, "y": 80 + row * margin},
-            "data": {"label": atom.content, "code": atom.id}
+            "data": {"label": atom.content, "code": atom.id},
+            "style": {"backgroundColor": "#D1FAE5", "color": "#065F46", "padding": "15px", "borderRadius": "12px", "width": 250, "border": "2px solid #059669"}
         })
         
-        # Buat koneksi dari links
         for target_id in atom.links:
              edges.append({
                  "id": f"e-z_{atom.id}-z_{target_id}",
-                 "source": f"z_{atom.id}",
-                 "target": f"z_{target_id}",
-                 "type": "step",
-                 "markerEnd": {"type": "ArrowClosed"}
+                 "source": f"z_{atom.id}", "target": f"z_{target_id}",
+                 "type": "smoothstep",
+                 "style": {"stroke": "#10B981", "strokeWidth": 2},
+                 "markerEnd": {"type": "ArrowClosed", "color": "#10B981"}
              })
-             
     return nodes, edges
 
 def _convert_sketchnoting(data: schemas.SketchnotingSchema) -> Tuple[list, list]:
-    nodes = []
-    edges = []
-    
-    # Pemetaan hint ke koordinat (kasar)
-    # Layar diasumsikan lebar 800x600
+    nodes, edges = [], []
     hint_map = {
-        "top-left": (50, 50),
-        "top-center": (350, 50),
-        "top-right": (650, 50),
-        "center-left": (50, 250),
-        "center": (350, 250),
-        "center-right": (650, 250),
-        "bottom-left": (50, 450),
-        "bottom-center": (350, 450),
-        "bottom-right": (650, 450),
+        "top-left": (50, 50), "top-center": (350, 50), "top-right": (650, 50),
+        "center-left": (50, 300), "center": (350, 300), "center-right": (650, 300),
+        "bottom-left": (50, 550), "bottom-center": (350, 550), "bottom-right": (650, 550),
     }
     
+    used_positions = []
     for i, sk in enumerate(data.nodes):
-        # Ambil posisi dari hint, fallback ke tengah
-        base_x, base_y = hint_map.get(sk.position_hint, (350, 250))
+        base_x, base_y = hint_map.get(sk.position_hint, (350, 300))
         
-        # Tambahkan sedikit offset berdasar index agar tidak persis bertumpuk
-        # jika hintnya sama
-        offset = i * 20 
+        # Collision avoidance
+        while any(abs(base_x - ux) < 150 and abs(base_y - uy) < 100 for ux, uy in used_positions):
+            base_x += 160
+            if base_x > 900:
+                base_x = 50
+                base_y += 120
+                
+        used_positions.append((base_x, base_y))
+        size = 120 + (sk.importance * 20)
         
         nodes.append({
-            "id": sk.id,
-            "type": "sketchNode",
-            "position": {"x": base_x + offset, "y": base_y + offset},
-            "data": {
-                "label": sk.content, 
-                "icon": sk.icon, 
-                "importance": sk.importance
-            }
+            "id": sk.id, "type": "sketchNode",
+            "position": {"x": base_x, "y": base_y},
+            "data": {"label": sk.content, "icon": sk.icon, "importance": sk.importance},
+            "style": {"backgroundColor": "#FEF08A", "color": "#854D0E", "padding": "15px", "borderRadius": "16px", "width": size, "border": "2px dashed #EAB308", "textAlign": "center", "fontWeight": "bold"}
         })
-        
     return nodes, edges
 
 def _convert_feynman(data: schemas.FeynmanSchema) -> Tuple[list, list]:
-    nodes = []
-    edges = []
-    
-    start_x = 200
-    y_step = 140
+    nodes, edges = [], []
+    start_x, y_step = 200, 180
     
     steps = [
         {"id": "fy_concept", "label": "The Concept", "content": data.concept, "step": 1},
         {"id": "fy_simple", "label": "Simple Explanation", "content": data.simple_explanation, "step": 2},
-        {"id": "fy_gap", "label": "Gap Identification", "content": "\n".join(f"- {g}" for g in data.gaps), "step": 3},
+        {"id": "fy_gap", "label": "Gap Identification", "content": "
+".join(f"- {g}" for g in data.gaps), "step": 3},
         {"id": "fy_analogy", "label": "Analogy", "content": data.analogy, "step": 4},
     ]
     
     for i, step_data in enumerate(steps):
         nodes.append({
-            "id": step_data["id"],
-            "type": "feynmanStep",
-            "position": {"x": start_x, "y": 20 + i * y_step},
-            "data": step_data
+            "id": step_data["id"], "type": "feynmanStep",
+            "position": {"x": start_x, "y": 80 + i * y_step},
+            "data": step_data,
+            "style": {"backgroundColor": "#FECDD3", "color": "#881337", "padding": "20px", "borderRadius": "12px", "width": 350, "border": "2px solid #F43F5E", "fontWeight": "bold"}
         })
         
-        # Edge berurutan dari atas ke bawah
         if i > 0:
             edges.append({
                 "id": f"e-{steps[i-1]['id']}-{step_data['id']}",
-                "source": steps[i-1]["id"],
-                "target": step_data["id"],
-                "type": "bezier",
-                "style": {"strokeWidth": 3}
+                "source": steps[i-1]["id"], "target": step_data["id"],
+                "type": "smoothstep",
+                "style": {"strokeWidth": 3, "stroke": "#FDA4AF"}
             })
             
-    # Refinement Notes (Mendampingi step 3 - Gap)
-    ref_y_start = 20 + 2 * y_step 
+    ref_y_start = 80 + 2 * y_step 
     for i, ref in enumerate(data.refinement_notes):
         ref_id = f"fy_ref_{i}"
         nodes.append({
-            "id": ref_id,
-            "type": "feynmanRef",
-            "position": {"x": start_x + 350, "y": ref_y_start + (i * 60)},
-            "data": {"label": ref}
+            "id": ref_id, "type": "feynmanRef",
+            "position": {"x": start_x + 450, "y": ref_y_start + (i * 80)},
+            "data": {"label": ref},
+            "style": {"backgroundColor": "#FFE4E6", "color": "#9F1239", "padding": "15px", "borderRadius": "8px", "width": 250, "border": "1px dashed #E11D48"}
         })
-        # Hubungkan ke node gap
         edges.append({
             "id": f"e-{ref_id}-fy_gap",
-            "source": ref_id,
-            "target": "fy_gap",
-            "type": "straight"
+            "source": ref_id, "target": "fy_gap",
+            "type": "smoothstep",
+            "style": {"stroke": "#FB7185", "strokeDasharray": "5,5"}
         })
-        
     return nodes, edges
