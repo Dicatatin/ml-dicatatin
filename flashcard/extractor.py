@@ -23,7 +23,8 @@ settings = get_settings()
 # Inisialisasi AsyncOpenAI dengan instructor
 _api_key = settings.llm_api_key if settings.llm_api_key else settings.openai_api_key
 _base_url = settings.llm_base_url if settings.llm_api_key else None
-client = instructor.from_openai(AsyncOpenAI(api_key=_api_key, base_url=_base_url))
+_mode = instructor.Mode.JSON if _base_url else instructor.Mode.TOOLS
+client = instructor.from_openai(AsyncOpenAI(api_key=_api_key, base_url=_base_url), mode=_mode)
 
 PROMPT_FILE = Path(__file__).parent / "prompts" / "generate.txt"
 
@@ -61,7 +62,7 @@ async def generate_flashcards(clean_text: str) -> List[Dict[str, Any]]:
     
     try:
         # Gunakan asyncio.wait_for untuk mengamankan dari timeout yang menggantung
-        model_name = settings.llm_model_name if settings.llm_model_name else settings.openai_model_flashcard
+        model_name = settings.llm_model_name
         structured_output = await asyncio.wait_for(
             client.chat.completions.create(
                 model=model_name,
