@@ -19,8 +19,7 @@ from transform.router import router as transform_router
 from transform.transformer import transform_notes
 from flashcard.extractor import generate_flashcards
 
-# Impor pipeline OCR
-from ocr.preprocessor import preprocess_image
+# Impor pipeline OCR (API-only)
 from ocr.extractor_llm import extract_text_api
 from ocr.sanitizer import sanitize_text
 
@@ -61,8 +60,8 @@ async def process_endpoint(
     method: str = Form(...)
 ):
     """
-    Pipeline utama Aplikasi:
-    Gambar -> OCR Extraction -> Text Sanitization -> 
+    Pipeline utama Aplikasi (API-only, tanpa engine OCR lokal):
+    Gambar -> Vision API OCR -> Text Sanitization -> 
     LLM Transformation -> Flashcard Generation -> JSON React Flow
     """
     start_time = time.time()
@@ -81,21 +80,13 @@ async def process_endpoint(
     if method not in valid_methods:
         raise InvalidMethodError(method)
 
-    ocr_engine = "llm_vision"
-    warning_msg = None
-
     # -------------------------------------------------------------------------
-    # 2. Preprocessing & OCR Extraction
+    # 2. OCR via Vision API
     # -------------------------------------------------------------------------
     try:
-        # Panggil ekstraksi LLM OCR (Jalur utama)
-        # TODO: Jika preprocessor cv2 dirasa sangat esensial sebelum masuk ke Vision API,
-        # kita bisa menyelipkan preprocess_image(file_bytes) di sini.
         raw_text, confidence_score = await extract_text_api(file_bytes)
     except Exception as e:
-        logger.error(f"OCR LLM Error: {e}")
-        # Jika ada error dari Vision API, kita beri fallback string kosong
-        # agar ditangkap oleh error 422 di bawah, kecuali ada PaddleOCR lokal.
+        logger.error(f"OCR Vision API Error: {e}")
         raw_text, confidence_score = "", 0.0
         
     if not raw_text or len(raw_text.strip()) < 5:
@@ -103,14 +94,10 @@ async def process_endpoint(
             status_code=422, 
             detail="Gambar terlalu buram atau tidak ada teks yang terdeteksi."
         )
-        
-    if confidence_score < settings.ocr_confidence_warning_threshold:
-        warning_msg = f"Kualitas gambar rendah (confidence: {confidence_score}). Hasil mungkin tidak akurat."
 
     # -------------------------------------------------------------------------
     # 3. Sanitasi Teks
     # -------------------------------------------------------------------------
-    # Membersihkan struktur teks, typo, dan singkatan agar lebih mudah dicerna transformer
     clean_text = sanitize_text(raw_text)
     
     # -------------------------------------------------------------------------
@@ -125,7 +112,6 @@ async def process_endpoint(
         flashcards = await generate_flashcards(clean_text)
     except Exception as e:
         logger.error(f"Gagal generate flashcard: {e}")
-        # Tetap lanjutkan pipeline tanpa flashcard daripada user kehilangan notes-nya
         flashcards = []
         
     processing_time = round(time.time() - start_time, 2)
@@ -143,10 +129,9 @@ async def process_endpoint(
             "edges": transform_result["edges"],
             "flashcards": flashcards,
             "metadata": {
-                "ocr_engine": ocr_engine,
+                "ocr_engine": "vision_api",
                 "confidence_score": confidence_score,
                 "processing_time_seconds": processing_time,
-                "warning": warning_msg
             }
         }
     }
