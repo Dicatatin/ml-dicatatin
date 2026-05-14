@@ -16,12 +16,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # Inisialisasi client OpenAI dengan Instructor
-# Gunakan mode asinkron karena dipanggil dari endpoint FastAPI
-# Memprioritaskan LLM_API_KEY (Biznet/Lainnya) jika ada, jika tidak fallback ke OPENAI_API_KEY
-_api_key = settings.llm_api_key if settings.llm_api_key else settings.openai_api_key
-_base_url = settings.llm_base_url if settings.llm_api_key else None
-_mode = instructor.Mode.JSON if _base_url else instructor.Mode.TOOLS
-client = instructor.from_openai(AsyncOpenAI(api_key=_api_key, base_url=_base_url), mode=_mode)
+client = instructor.from_openai(AsyncOpenAI(api_key=settings.openai_api_key))
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
@@ -74,7 +69,7 @@ async def transform_notes(clean_text: str, method: str) -> Dict[str, Any]:
     
     try:
         # Gunakan asyncio.wait_for untuk membatasi waktu eksekusi LLM
-        model_name = settings.llm_model_name
+        model_name = settings.model_transform
         structured_output = await asyncio.wait_for(
             client.chat.completions.create(
                 model=model_name,
