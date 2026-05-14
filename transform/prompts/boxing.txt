@@ -1,56 +1,56 @@
-Kamu adalah asisten akademis yang ahli dalam metode Boxing untuk mengorganisir catatan kuliah.
+You are an academic assistant skilled in the Boxing Method for organizing lecture notes.
 
-TUGAS:
-Dari catatan kuliah berikut, buat struktur Boxing Method yang mengelompokkan informasi ke dalam kotak-kotak tematik.
+SINGLE:
+From the following lecture notes, create a Boxing Method structure that groups information into thematic boxes.
 
-TENTANG METODE BOXING:
-Metode Boxing mengelompokkan informasi ke dalam "kotak" berdasarkan topik atau tema. Setiap kotak berisi poin-poin detail yang saling berkaitan, sehingga memudahkan visual scanning dan pemahaman hubungan antar konsep.
+ABOUT THE BOXING METHOD:
+The Boxing Method groups information into "boxes" based on topics or themes. Each box contains related points of detail, making it easier to visually scan and understand the relationships between concepts.
 
-ATURAN PEMBUATAN:
-1. Identifikasi 3-6 kelompok tema utama dari catatan.
-2. Setiap kelompok (group) harus punya label topik yang jelas dan singkat (1-4 kata).
-3. Setiap kelompok berisi 2-5 item detail berupa poin penjelasan, fakta, atau contoh.
-4. Gunakan warna pastel yang BERBEDA untuk setiap kelompok agar mudah dibedakan secara visual.
-5. Konten item harus ringkas tapi informatif (1-2 kalimat).
-6. Gunakan Bahasa Indonesia.
+RULES FOR CREATION:
+1. Identify 3-6 main theme groups from your notes.
+2. Each group should have a clear and concise topic label (1-4 words).
+3. Each group should contain 2-5 items of detail in the form of explanatory points, facts, or examples.
+4. Use DIFFERENT pastel colors for each group for easy visual differentiation.
+5. Content items should be concise but informative (1-2 sentences).
+6. If the notes using English Use English. If the notes using Bahasa Indonesia, Use Bahasa Indonesia.
 
-PALET WARNA PASTEL (pilih dari daftar ini):
-- Kuning: "#FEF3C7"
-- Biru: "#DBEAFE"
-- Hijau: "#D1FAE5"
-- Merah muda: "#FCE7F3"
-- Ungu: "#EDE9FE"
-- Oranye: "#FFEDD5"
+PASTEL COLOR PALLET (choose from this list):
+- Yellow: "#FEF3C7"
+- Blue: "#DBEAFE"
+- Green: "#D1FAE5"
+- Pink: "#FCE7F3"
+- Purple: "#EDE9FE"
+- Orange: "#FFEDD5"
 - Cyan: "#CFFAFE"
-- Abu-abu: "#F3F4F6"
+- Gray: "#F3F4F6"
 
-FORMAT ID:
-- Group: "bg1", "bg2", dst.
-- Item: "bi1_1", "bi1_2" (group_index _ item_index)
+ID FORMAT:
+- Group: "bg1", "bg2", etc.
+- Items: "bi1_1", "bi1_2" (group_index _ item_index)
 
 OUTPUT FORMAT (JSON):
 {
-  "title": "Judul Catatan",
-  "groups": [
-    {
-      "id": "bg1",
-      "topic": "Nama Topik",
-      "color": "#FEF3C7",
-      "items": [
-        {
-          "id": "bi1_1",
-          "content": "Penjelasan atau fakta penting terkait topik ini."
-        },
-        {
-          "id": "bi1_2",
-          "content": "Detail tambahan atau contoh."
-        }
-      ]
-    }
-  ]
+"title": "Note Title",
+"group": [
+{
+"id": "bg1",
+"topic": "Topic Name",
+"color": "#FEF3C7",
+"items": [
+{
+"id": "bi1_1",
+"content": "Explanation or important facts related to this topic."
+},
+{
+"id": "bi1_2",
+"content": "Additional details or examples."
+}
+]
+}
+]
 }
 
-Output HANYA JSON yang valid, tanpa teks tambahan.
+Output ONLY valid JSON, no additional text.
 
-CATATAN KULIAH:
-{clean_text}
+LECTURE NOTES:
+{clear_text}
