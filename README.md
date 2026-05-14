@@ -109,7 +109,7 @@ cp .env.example .env
 
 **Pengembangan Lokal:**
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **Melalui Docker:**
@@ -123,18 +123,23 @@ docker compose up --build
 |---|---|---|
 | `POST` | `/process` | Pipeline utama. Menerima `file` (gambar) dan `method` (form-data). Mengembalikan workspace React Flow + flashcard. |
 | `POST` | `/transform` | Mengubah metode pencatatan menggunakan teks yang sudah dibersihkan (tanpa upload ulang). |
+| `POST` | `/flashcard` | Membuat ulang flashcard (regenerate) menggunakan teks yang sudah dibersihkan. |
 | `GET` | `/health` | Health check untuk Docker dan routing internal. |
 
 ## 📁 Struktur Proyek
 
 ```
 ml-dicatatin/
-├── core/             # Konfigurasi (Pydantic Settings) & custom exceptions
-├── ocr/              # Ekstraksi teks via Vision API & sanitasi
-├── transform/        # Prompt, skema validasi, & logika transformasi LLM
-├── flashcard/        # Generator flashcard & algoritma SM-2
-├── main.py           # Entry point FastAPI
-├── Dockerfile        # Container image (lightweight, API-only)
+├── app/                  # Semua kode Python hidup di sini
+│   ├── api/              # HTTP Layer: routes & schemas (tanpa business logic)
+│   ├── core/             # Konfigurasi, exceptions, logger, API clients
+│   ├── ocr/              # Ekstraksi teks via Vision API & sanitasi
+│   ├── transform/        # Prompt, skema validasi, & logika transformasi LLM
+│   ├── flashcard/        # Generator flashcard & algoritma SM-2
+│   ├── services/         # Service layer: orchestrasi pipeline
+│   └── main.py           # Entry point FastAPI & app factory
+├── tests/                # Unit test (SM-2, Schemas, Pipeline)
+├── Dockerfile            # Container image (lightweight, API-only)
 ├── docker-compose.yml
 ├── requirements.txt
 └── .env.example
