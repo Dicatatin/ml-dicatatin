@@ -101,19 +101,7 @@ async def transform_notes(clean_text: str, method: str) -> Dict[str, Any]:
     }
 
 
-def calculate_handles(source_x, source_y, target_x, target_y):
-    dx = target_x - source_x
-    dy = target_y - source_y
-    if abs(dx) > abs(dy):
-        if dx > 0:
-            return "right", "left"
-        else:
-            return "left", "right"
-    else:
-        if dy > 0:
-            return "bottom", "top"
-        else:
-            return "top", "bottom"
+
 
 def convert_to_reactflow(data: Any, method: str) -> Tuple[list, list]:
     """
@@ -138,17 +126,7 @@ def convert_to_reactflow(data: Any, method: str) -> Tuple[list, list]:
     elif method == "feynman":
         nodes, edges = _convert_feynman(data)
         
-    # Add handles to edges based on position
-    node_positions = {n["id"]: n["position"] for n in nodes if "position" in n and n.get("type") != "boxingItem"}
-    for e in edges:
-        source_id = e.get("source")
-        target_id = e.get("target")
-        if source_id in node_positions and target_id in node_positions:
-            s_pos = node_positions[source_id]
-            t_pos = node_positions[target_id]
-            sh, th = calculate_handles(s_pos["x"], s_pos["y"], t_pos["x"], t_pos["y"])
-            e["sourceHandle"] = sh
-            e["targetHandle"] = th
+
 
     # Determine bounds for background and header
     if nodes:
@@ -384,14 +362,25 @@ def _convert_zettelkasten(data: schemas.ZettelkastenSchema) -> Tuple[list, list]
             "style": {"backgroundColor": "#D1FAE5", "color": "#065F46", "padding": "15px", "borderRadius": "12px", "width": 250, "border": "2px solid #059669"}
         })
         
-        for target_id in atom.links:
+        if not atom.links and i > 0:
+             # Fallback if LLM forgets to link
+             prev_id = data.atoms[i-1].id
              edges.append({
-                 "id": f"e-z_{atom.id}-z_{target_id}",
-                 "source": f"z_{atom.id}", "target": f"z_{target_id}",
+                 "id": f"e-z_{atom.id}-z_{prev_id}",
+                 "source": f"z_{atom.id}", "target": f"z_{prev_id}",
                  "type": "smoothstep",
-                 "style": {"stroke": "#10B981", "strokeWidth": 2},
+                 "style": {"stroke": "#10B981", "strokeWidth": 2, "strokeDasharray": "4,4"},
                  "markerEnd": {"type": "ArrowClosed", "color": "#10B981"}
              })
+        else:
+             for target_id in atom.links:
+                  edges.append({
+                      "id": f"e-z_{atom.id}-z_{target_id}",
+                      "source": f"z_{atom.id}", "target": f"z_{target_id}",
+                      "type": "smoothstep",
+                      "style": {"stroke": "#10B981", "strokeWidth": 2},
+                      "markerEnd": {"type": "ArrowClosed", "color": "#10B981"}
+                  })
     return nodes, edges
 
 def _convert_sketchnoting(data: schemas.SketchnotingSchema) -> Tuple[list, list]:
@@ -422,6 +411,17 @@ def _convert_sketchnoting(data: schemas.SketchnotingSchema) -> Tuple[list, list]
             "data": {"label": sk.content, "icon": sk.icon, "importance": sk.importance},
             "style": {"backgroundColor": "#FEF08A", "color": "#854D0E", "padding": "15px", "borderRadius": "16px", "width": size, "border": "2px dashed #EAB308", "textAlign": "center", "fontWeight": "bold"}
         })
+        
+        # Connect nodes sequentially to create a reading path
+        if i > 0:
+            prev_id = data.nodes[i-1].id
+            edges.append({
+                "id": f"e-{prev_id}-{sk.id}",
+                "source": prev_id, "target": sk.id,
+                "type": "bezier",
+                "style": {"stroke": "#CA8A04", "strokeWidth": 3, "strokeDasharray": "5,5"},
+                "animated": True
+            })
     return nodes, edges
 
 def _convert_feynman(data: schemas.FeynmanSchema) -> Tuple[list, list]:
