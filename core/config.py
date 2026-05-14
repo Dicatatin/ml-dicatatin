@@ -33,33 +33,23 @@ class Settings(BaseSettings):
     openai_api_key: str
 
     # -------------------------------------------------------------------------
+    # Vision API — Model untuk OCR
+    # -------------------------------------------------------------------------
+    vision_model_name: str = "gpt-5.4-nano"
+
+    # -------------------------------------------------------------------------
     # NLP API (Biznet AI / Lainnya) — API Key untuk Transformasi & Flashcard
     # -------------------------------------------------------------------------
     llm_api_key: str | None = None
-    llm_model_name: str | None = None
-    llm_base_url: str | None = None
-
-    # Model per stage pipeline
-    openai_model_ocr: str = "gpt-4o"          # Vision OCR (jalur utama)
-    openai_model_transform: str = "gpt-4o"    # Transformasi metode belajar (fallback)
-    openai_model_sanitizer: str = "gpt-4o-mini"  # Sanitasi teks (hemat biaya)
-    openai_model_flashcard: str = "gpt-4o-mini"  # Generate flashcard (hemat biaya)
+    llm_model_name: str | None = "openai/gpt-oss-20b"
+    llm_base_url: str | None = "https://api.biznetgio.ai/v1"
 
     # -------------------------------------------------------------------------
     # Timeout (dalam detik)
     # -------------------------------------------------------------------------
-    ocr_timeout: int = 30         # Timeout untuk LLM Vision OCR
+    ocr_timeout: int = 30         # Timeout untuk Vision API OCR
     transform_timeout: int = 45   # Timeout untuk transformasi metode
     flashcard_timeout: int = 30   # Timeout untuk generate flashcard
-
-    # -------------------------------------------------------------------------
-    # OCR Config
-    # -------------------------------------------------------------------------
-    ocr_fallback_enabled: bool = True  # Aktifkan PaddleOCR jika LLM OCR gagal
-
-    # Threshold untuk evaluasi confidence PaddleOCR
-    ocr_confidence_warning_threshold: float = 0.60   # Di bawah ini → warning
-    ocr_confidence_error_threshold: float = 0.40     # Di bawah ini → ImageTooBlurryError
 
     # -------------------------------------------------------------------------
     # Upload Limits
@@ -110,10 +100,9 @@ def get_settings() -> Settings:
     """
     settings = Settings()  # type: ignore[call-arg]
     logger.info(
-        "Settings loaded | env=%s | ocr_model=%s | transform_model=%s | fallback=%s",
+        "Settings loaded | env=%s | vision_model=%s | llm_model=%s",
         settings.app_env,
-        settings.openai_model_ocr,
-        settings.openai_model_transform,
-        settings.ocr_fallback_enabled,
+        settings.vision_model_name,
+        settings.llm_model_name,
     )
     return settings
