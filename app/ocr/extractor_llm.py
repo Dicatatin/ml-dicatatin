@@ -24,10 +24,10 @@ def _encode_image(image_bytes: bytes) -> str:
     return base64.b64encode(image_bytes).decode('utf-8')
 
 
-async def extract_text_api(image_bytes: bytes) -> tuple[str, float]:
+async def extract_text_api(image_bytes: bytes) -> str:
     """
     Mengirim gambar ke Vision API untuk ekstraksi teks (OCR).
-    Return: (raw_text, confidence_score)
+    Return: (raw_text)
     """
     base64_image = _encode_image(image_bytes)
     
@@ -62,10 +62,8 @@ async def extract_text_api(image_bytes: bytes) -> tuple[str, float]:
         )
         
         extracted_text = response.choices[0].message.content.strip()
-        confidence = 0.90 if extracted_text else 0.0
-        
-        return extracted_text, confidence
+        return extracted_text
         
     except Exception as e:
-        logger.error(f"[OCR API Error] Kegagalan memanggil Vision API: {e}")
-        return "", 0.0
+        logger.error(f"Kegagalan memanggil Vision API: {e}")
+        return ""
