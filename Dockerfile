@@ -3,18 +3,18 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# 1. Gunakan /app untuk instalasi awal
+# Posisikan terminal di /app
 WORKDIR /app
 
+# Install dependencies terlebih dahulu (best practice Docker caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 2. Salin semua file dari luar ke dalam /app container
+# Salin seluruh file (termasuk folder 'app' dan isinya) ke dalam /app
 COPY . .
 
-# 3. PINDAH FOLDER DI SINI (Tepat sebelum menjalankan CMD)
-WORKDIR /app/app
-
+# Ekspos port
 EXPOSE ${PORT:-8000}
 
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Jalankan Uvicorn dengan menunjuk ke folder 'app' dan file 'main.py'
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
