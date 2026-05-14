@@ -8,9 +8,9 @@ import instructor
 from openai import AsyncOpenAI
 from openai import APITimeoutError, APIError
 
-from core.config import get_settings
-from core.exceptions import InvalidMethodError, LLMTimeoutError
-from transform import schemas
+from app.core.config import get_settings
+from app.core.exceptions import InvalidMethodError, LLMTimeoutError
+from app.transform import schemas
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

@@ -16,9 +16,9 @@ from typing import Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from core.config import get_settings
-from core.logger import setup_logging
-from api import process_router, transform_router, flashcard_router
+from app.core.config import get_settings
+from app.core.logger import setup_logging
+from app.api import process_router, transform_router, flashcard_router
 
 # Inisialisasi logging terpusat (sebelum apapun)
 setup_logging()
