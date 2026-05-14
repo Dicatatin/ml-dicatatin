@@ -41,7 +41,7 @@ async def extract_text_api(image_bytes: bytes) -> tuple[str, float]:
 
     try:
         response = await client.chat.completions.create(
-            model=settings.vision_model_name,
+            model=settings.model_ocr,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {
