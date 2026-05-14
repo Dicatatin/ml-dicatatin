@@ -1,27 +1,36 @@
-import os
+"""
+ocr/extractor_llm.py
+
+Modul untuk mengekstrak teks dari gambar menggunakan Vision API (GPT-5.4 Nano).
+Ini adalah satu-satunya jalur OCR di branch main (tanpa engine lokal).
+"""
+
 import base64
+import logging
+
 from openai import AsyncOpenAI
-from dotenv import load_dotenv
 
-# Muat variabel dari .env
-load_dotenv()
+from core.config import get_settings
 
-# Inisialisasi klien Async OpenAI (sangat penting agar FastAPI tidak terblokir)
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-VISION_MODEL = os.getenv("VISION_MODEL_NAME", "gpt-5.4-nano")
+logger = logging.getLogger(__name__)
+settings = get_settings()
+
+# Inisialisasi klien Async OpenAI
+client = AsyncOpenAI(api_key=settings.openai_api_key)
+
 
 def _encode_image(image_bytes: bytes) -> str:
     """Mengubah raw bytes gambar menjadi string Base64."""
     return base64.b64encode(image_bytes).decode('utf-8')
 
+
 async def extract_text_api(image_bytes: bytes) -> tuple[str, float]:
     """
-    Mengirim gambar ke GPT-5.4 Nano untuk ekstraksi teks (OCR).
+    Mengirim gambar ke Vision API untuk ekstraksi teks (OCR).
     Return: (raw_text, confidence_score)
     """
     base64_image = _encode_image(image_bytes)
     
-    # Prompting adalah kunci! Kita harus membungkam LLM agar tidak cerewet.
     system_prompt = (
         "Kamu adalah mesin OCR tingkat lanjut. Tugasmu HANYA mengekstrak "
         "teks dari gambar yang diberikan. Jangan tambahkan basa-basi, jangan "
@@ -32,7 +41,7 @@ async def extract_text_api(image_bytes: bytes) -> tuple[str, float]:
 
     try:
         response = await client.chat.completions.create(
-            model=VISION_MODEL,
+            model=settings.vision_model_name,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {
@@ -42,25 +51,21 @@ async def extract_text_api(image_bytes: bytes) -> tuple[str, float]:
                             "type": "image_url",
                             "image_url": {
                                 "url": f"data:image/jpeg;base64,{base64_image}",
-                                "detail": "high" # Gunakan 'high' agar model bisa membaca tulisan kecil/miring
+                                "detail": "high"
                             }
                         }
                     ]
                 }
             ],
             max_completion_tokens=2000,
-            temperature=0.1 # Suhu rendah = tidak halusinasi, murni deterministik
+            temperature=0.1
         )
         
         extracted_text = response.choices[0].message.content.strip()
-        
-        # Karena LLM API tidak memberikan skor confidence per karakter seperti PaddleOCR,
-        # kita pukul rata confidence 0.99 jika berhasil mengembalikan teks.
         confidence = 0.90 if extracted_text else 0.0
         
         return extracted_text, confidence
         
     except Exception as e:
-        print(f"[OCR API Error] Kegagalan memanggil Vision API: {str(e)}")
-        # Jika gagal, kembalikan string kosong agar sistem bisa memicu fallback ke PaddleOCR
+        logger.error(f"[OCR API Error] Kegagalan memanggil Vision API: {e}")
         return "", 0.0
