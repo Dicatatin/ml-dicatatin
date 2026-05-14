@@ -1,10 +1,10 @@
 # 📚 DICATAT.IN — Machine Learning Service (ml-dicatatin)
 
-**ml-dicatatin** adalah service *core AI engine* untuk platform **DICATAT.IN**. Service ini mengubah foto catatan tulisan tangan menjadi materi belajar interaktif dan terstruktur (workspace React Flow) serta flashcard untuk *active recall* — sepenuhnya melalui API LLM, tanpa engine OCR lokal.
+**ml-dicatatin** adalah service *core AI engine* untuk platform **DICATAT.IN**. Service ini mengubah foto catatan tulisan tangan menjadi materi belajar interaktif dan terstruktur (workspace React Flow) serta flashcard untuk *active recall* — sepenuhnya melalui OpenAI API.
 
 ## 🚀 Fitur Utama
 
-- **OCR via Vision API**: Mengekstrak teks dari gambar catatan tulisan tangan menggunakan OpenAI Vision API.
+- **OCR via Vision API**: Mengekstrak teks dari gambar catatan tulisan tangan menggunakan OpenAI Vision API (`gpt-4o-mini`).
 - **Sanitasi Teks AI**: Otomatis memperbaiki *typo* dan memperluas singkatan bahasa Indonesia.
 - **7 Metode Belajar yang Didukung**:
   1. Mind Map
@@ -41,7 +41,7 @@ Gambar (JPG/PNG) + Metode
         ▼                      ▼
  ┌──────────────┐      ┌──────────────┐
  │  Transformer │      │  Flashcard   │
- │  (LLM)       │      │  Generator   │
+ │  (OpenAI)    │      │  Generator   │
  └──────────────┘      └──────────────┘
         │                      │
         ▼                      ▼
@@ -57,15 +57,14 @@ Gambar (JPG/PNG) + Metode
 1. **Input**: File Gambar (JPG/PNG) & Pemilihan Metode
 2. **Ekstraksi (OCR)**: OpenAI Vision API → Teks Mentah (*Raw Text*)
 3. **Sanitasi**: Pembersihan teks → Teks Bersih (*Clean Text*)
-4. **Transformasi**: LLM (Biznet AI / Qwen) + Instructor → JSON Terstruktur (React Flow *Nodes & Edges*)
-5. **Flashcard**: LLM → Pasangan Tanya & Jawab (*Q&A*) dengan parameter SM-2
+4. **Transformasi**: OpenAI + Instructor → JSON Terstruktur (React Flow *Nodes & Edges*)
+5. **Flashcard**: OpenAI → Pasangan Tanya & Jawab (*Q&A*) dengan parameter SM-2
 6. **Output**: Objek Workspace Lengkap ke Backend
 
 ## 🛠 Tech Stack
 
 - **Framework**: FastAPI (Python 3.11+)
-- **OCR**: OpenAI Vision API (`gpt-5.4-nano`)
-- **Transformasi & Flashcard**: Biznet AI (`Qwen/Qwen3-Coder`) via OpenAI-compatible API
+- **AI Engine**: OpenAI API (`gpt-4o-mini`) — satu API key untuk semua stage
 - **Structured Output**: Instructor (validasi output Pydantic)
 - **Konfigurasi**: Pydantic Settings
 
@@ -93,19 +92,18 @@ pip install -r requirements.txt
 
 **3. Konfigurasi Environment Variables**
 
-Salin file `.env.example` menjadi `.env` dan isi dengan kunci API Anda.
+Salin file `.env.example` menjadi `.env` dan isi dengan API key OpenAI Anda.
 
 ```bash
 cp .env.example .env
 ```
 
-| Variable | Deskripsi | Contoh |
+| Variable | Deskripsi | Default |
 |---|---|---|
-| `OPENAI_API_KEY` | API key OpenAI untuk Vision OCR | `sk-proj-xxx...` |
-| `VISION_MODEL_NAME` | Model Vision API untuk OCR | `gpt-5.4-nano` |
-| `LLM_API_KEY` | API key Biznet AI untuk transformasi & flashcard | `sk-xxx...` |
-| `LLM_MODEL_NAME` | Model LLM untuk transformasi | `Qwen/Qwen3-Coder-480B-A35B-Instruct` |
-| `LLM_BASE_URL` | Base URL provider LLM | `https://api.biznetgio.ai/v1` |
+| `OPENAI_API_KEY` | API key OpenAI **(wajib)** | — |
+| `MODEL_OCR` | Model untuk Vision OCR | `gpt-4o-mini` |
+| `MODEL_TRANSFORM` | Model untuk transformasi metode | `gpt-4o-mini` |
+| `MODEL_FLASHCARD` | Model untuk generate flashcard | `gpt-4o-mini` |
 
 ## 🚀 Menjalankan Service
 
