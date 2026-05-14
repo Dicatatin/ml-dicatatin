@@ -1,16 +1,3 @@
-"""
-main.py
-
-Entry point untuk FastAPI app ml-dicatatin.
-File ini HANYA bertanggung jawab untuk:
-1. Membuat instance FastAPI app
-2. Setup middleware & startup events
-3. Registrasi routers dari api/
-4. Health check endpoint
-
-Semua business logic ada di services/ dan domain modules.
-"""
-
 from typing import Dict
 
 from fastapi import FastAPI
@@ -32,7 +19,6 @@ app = FastAPI(
                 "mengubah foto catatan menjadi catatan digital terstruktur.",
 )
 
-# Konfigurasi CORS (untuk integrasi antar container atau frontend)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
