@@ -8,14 +8,6 @@ Semua error mengikuti format standar: {"status": "error", "message": "..."}
 from fastapi import HTTPException
 
 
-class ImageTooBlurryError(HTTPException):
-    def __init__(self):
-        super().__init__(
-            status_code=422,
-            detail="Gambar terlalu buram. Coba foto dengan pencahayaan lebih terang dan kamera tidak bergerak."
-        )
-
-
 class UnsupportedFileTypeError(HTTPException):
     def __init__(self):
         super().__init__(
