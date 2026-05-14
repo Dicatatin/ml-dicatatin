@@ -13,9 +13,9 @@ from typing import Any, Dict, List
 import instructor
 from openai import AsyncOpenAI
 
-from core.config import get_settings
-from core.exceptions import LLMTimeoutError
-from flashcard.schemas import FlashcardListSchema
+from app.core.config import get_settings
+from app.core.exceptions import LLMTimeoutError
+from app.flashcard.schemas import FlashcardListSchema
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

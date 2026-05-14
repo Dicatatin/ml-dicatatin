@@ -1,25 +1,12 @@
-"""
-services/pipeline.py
-
-Service layer untuk orchestrasi pipeline utama ml-dicatatin.
-Berisi business logic murni tanpa coupling ke HTTP layer (FastAPI).
-
-Semua endpoint (routes) harus memanggil service functions ini,
-BUKAN langsung memanggil domain modules (ocr, transform, flashcard).
-
-Pipeline:
-    Image → Vision OCR → Sanitize → LLM Transform → Flashcard Generate
-"""
-
 import time
 import logging
 from typing import Any, Dict, List
 
-from core.exceptions import InvalidMethodError
-from ocr.extractor_llm import extract_text_api
-from ocr.sanitizer import sanitize_text
-from transform.transformer import transform_notes
-from flashcard.extractor import generate_flashcards
+from app.core.exceptions import InvalidMethodError
+from app.ocr.extractor_llm import extract_text_api
+from app.ocr.sanitizer import sanitize_text
+from app.transform.transformer import transform_notes
+from app.flashcard.extractor import generate_flashcards
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 from functools import lru_cache
 from openai import AsyncOpenAI
 import instructor
-from core.config import get_settings
+from app.core.config import get_settings
 
 @lru_cache()
 def get_openai_client() -> AsyncOpenAI:

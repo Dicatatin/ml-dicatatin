@@ -9,10 +9,10 @@ import logging
 
 from fastapi import APIRouter, UploadFile, File, Form
 
-from core.config import get_settings
-from core.exceptions import UnsupportedFileTypeError, FileTooLargeError
-from api.schemas import ProcessResponse, ProcessResponseData, ProcessMetadata
-from services.pipeline import process_image
+from app.core.config import get_settings
+from app.core.exceptions import UnsupportedFileTypeError, FileTooLargeError
+from app.api.schemas import ProcessResponse, ProcessResponseData, ProcessMetadata
+from app.services.pipeline import process_image
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

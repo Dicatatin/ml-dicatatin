@@ -9,8 +9,8 @@ import logging
 
 from fastapi import APIRouter
 
-from api.schemas import FlashcardRequest, FlashcardResponse, FlashcardResponseData, FlashcardMetadata
-from services.pipeline import regenerate_flashcards
+from app.api.schemas import FlashcardRequest, FlashcardResponse, FlashcardResponseData, FlashcardMetadata
+from app.services.pipeline import regenerate_flashcards
 
 logger = logging.getLogger(__name__)
 

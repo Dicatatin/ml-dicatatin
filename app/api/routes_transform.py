@@ -9,8 +9,8 @@ import logging
 
 from fastapi import APIRouter
 
-from api.schemas import TransformRequest, TransformResponse, TransformResponseData, TransformMetadata
-from services.pipeline import retransform
+from app.api.schemas import TransformRequest, TransformResponse, TransformResponseData, TransformMetadata
+from app.services.pipeline import retransform
 
 logger = logging.getLogger(__name__)
 
