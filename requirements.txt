@@ -6,20 +6,7 @@ httpx>=0.27.2
 python-dotenv>=1.0.1
 pydantic>=2.8.2
 pydantic_settings
-jiwer==4.0.0
+
 # --- AI TRANSFORMATION ENGINE ---
 openai>=1.40.0
 instructor>=1.3.0
-
-# --- COMPUTER VISION & OCR ---
-paddlepaddle>=2.6.0
-paddleocr>=2.8.0
-opencv-python-headless>=4.10.0
-Pillow>=10.4.0
-
-# --- MATH & TENSORS (THE GLUE) ---
-numpy>=1.26.0
-
-# --- PDF PROCESSING ---
-pdf2image>=1.16.3
-PyMuPDF>=1.25.0
